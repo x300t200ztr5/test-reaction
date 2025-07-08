@@ -60,18 +60,38 @@ void runReactionTest() {
   display.println("Wait...");
   display.display();
 
-  delay(random(2000, 5000));  // Ждем 2-5 секунд
+  // Ждём 2-5 секунд, проверяя кнопку (раннее нажатие)
+  unsigned long waitTime = random(2000, 5000);
+  unsigned long startWait = millis();
+
+  while (millis() - startWait < waitTime) {
+    if (digitalRead(buttonPin) == LOW) {
+      // Нажал слишком рано
+      showTooEarly();
+      return; // Завершаем раунд, возвращаемся в loop()
+    }
+    delay(10);
+  }
 
   bool fakeTap = random(0, 100) < 20;  // 20% шанс обманки
 
   if (fakeTap) {
-    // Обманка: просто пик и пауза 2-3 секунды
+    // Обманка: пик звука
     tone(buzzerPin, 1000, 100);
-    delay(random(2000, 3000));
-    // После паузы запускаем настоящий TAP
+
+    // Задержка 2-3 сек с проверкой кнопки (если нажал — Too early)
+    unsigned long fakeWait = random(2000, 3000);
+    unsigned long startFakeWait = millis();
+    while (millis() - startFakeWait < fakeWait) {
+      if (digitalRead(buttonPin) == LOW) {
+        showTooEarly();
+        return;
+      }
+      delay(10);
+    }
   }
 
-  // Реальный TAP (после обманки или сразу)
+  // Настоящий TAP
   display.clearDisplay();
   display.setTextSize(2);
   display.setCursor(10, 20);
